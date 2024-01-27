@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{borrow::Cow, collections::HashMap, sync::Arc};
 
 use once_cell::sync::Lazy;
 use reqwest::{redirect::Policy, Client as ReqwestClient, Url};
@@ -6,7 +6,7 @@ use scraper::{Html, Selector};
 
 use super::{
     api::RequestError,
-    auth::{Auth, Credentials, LoginError, LoginResult},
+    auth::{Auth, Credentials, LoginResult},
 };
 
 /// Struct that holds HTTP Client and base url
@@ -46,7 +46,7 @@ impl Client {
 /// Bakalari api struct
 #[derive(Debug)]
 pub struct Bakalari {
-    client: Client,
+    client: Arc<Client>,
     auth: Auth,
     classes: HashMap<String, String>,
     teachers: HashMap<String, String>,
@@ -75,9 +75,8 @@ impl Bakalari {
         &self.rooms
     }
 
-
     /// Get classes, teachers and rooms
-    /// 
+    ///
     /// # Errors
     /// If request fails
     async fn get_info(
@@ -94,7 +93,7 @@ impl Bakalari {
     > {
         let res = client
             .get(url.join("/timetable/public").unwrap())
-            .header("Cookie", format!("BakaAuth={}", token))
+            .header("Cookie", format!("BakaAuth={token}"))
             .send()
             .await?;
 
@@ -122,7 +121,7 @@ impl Bakalari {
 
     /// Get client
     #[must_use]
-    pub const fn client(&self) -> &Client {
+    pub fn client(&self) -> &Client {
         &self.client
     }
 
@@ -131,10 +130,21 @@ impl Bakalari {
     /// # Errors
     /// Returns error if authentication fails
     pub async fn from_creds(creds: (String, String), url: Url) -> Result<Self, RequestError> {
-        let client = Client::new(url);
-        let mut auth = Auth::from_creds((creds.0, creds.1), &client).await?;
-        let (classes, teachers, rooms) = Self::get_info(client.reqwest_client(), client.url(), &auth.get_token(&client).await?).await?;
-        Ok(Self { client, auth , classes, teachers, rooms })
+        let client = Arc::new(Client::new(url));
+        let auth = Auth::from_creds((creds.0, creds.1), &client).await?;
+        let (classes, teachers, rooms) = Self::get_info(
+            client.reqwest_client(),
+            client.url(),
+            &auth.get_token(client.clone()).await?,
+        )
+        .await?;
+        Ok(Self {
+            client,
+            auth,
+            classes,
+            teachers,
+            rooms,
+        })
     }
 
     /// Create Bakalari instance without storing credentials
@@ -142,18 +152,25 @@ impl Bakalari {
     /// # Errors
     /// Returns error if authentication fails
     pub async fn from_creds_no_store(creds: (&str, &str), url: Url) -> Result<Self, RequestError> {
-        let client = Client::new(url);
+        let client = Arc::new(Client::new(url));
         let token = Credentials::login((&creds.0, &creds.1), &client).await?;
-        let (classes, teachers, rooms) = Self::get_info(client.reqwest_client(), client.url(), &token).await?;
+        let (classes, teachers, rooms) =
+            Self::get_info(client.reqwest_client(), client.url(), &token).await?;
         let auth = Auth::from_token(token);
-        Ok(Self { client, auth , classes, teachers, rooms })
+        Ok(Self {
+            client,
+            auth,
+            classes,
+            teachers,
+            rooms,
+        })
     }
 
     /// Get token
     ///
     /// # Errors
     /// If renew fails
-    pub async fn get_token(&mut self) -> LoginResult<&str> {
-        self.auth.get_token(&self.client).await
+    pub async fn get_token(&self) -> LoginResult<Cow<'_, String>> {
+        self.auth.get_token(self.client.clone()).await
     }
 }

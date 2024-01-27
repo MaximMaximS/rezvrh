@@ -1,6 +1,5 @@
-use chrono::{Duration, NaiveDate, NaiveTime};
+use chrono::{Duration, NaiveTime};
 use derive_more::Display;
-use grid::Grid;
 
 pub use parser::TimetableError as ParseTimetableError;
 

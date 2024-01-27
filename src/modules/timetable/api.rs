@@ -1,9 +1,6 @@
 use super::super::api::{RequestError, RequestResult};
 use super::super::bakalari::Bakalari;
 use super::{Timetable, Type, Which};
-use bimap::BiHashMap;
-use scraper::{Html, Selector};
-use std::{fs, io};
 
 impl Bakalari {
     /// Test api connection
@@ -13,7 +10,7 @@ impl Bakalari {
     ///
     /// # Panics
     /// If url join fails
-    pub async fn test(&mut self) -> RequestResult<()> {
+    pub async fn test(&self) -> RequestResult<()> {
         let client = self.client();
         let res = client
             .reqwest_client()
@@ -38,7 +35,11 @@ impl Bakalari {
     ///
     /// # Panics
     /// If url join fails (shouldn't)
-    pub async fn get_timetable(&mut self, which: Which, timetable_type: &Type<'_>) -> RequestResult<Timetable> {
+    pub async fn get_timetable(
+        &self,
+        which: Which,
+        timetable_type: &Type<'_>,
+    ) -> RequestResult<Timetable> {
         let client = self.client();
         let res = client
             .reqwest_client()

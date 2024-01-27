@@ -1,7 +1,11 @@
+use std::borrow::Cow;
+use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use reqwest::Response;
 use thiserror::Error;
+use tokio::sync::mpsc;
+use tokio::sync::oneshot;
 
 use super::bakalari::Client;
 
@@ -38,12 +42,12 @@ impl TempToken {
     }
 }
 
+type TokenRequest = (Arc<Client>, oneshot::Sender<LoginResult<String>>);
+
 /// Struct that hold the credentials and token
-#[derive(Debug, PartialEq, Eq, Hash, Clone)]
+#[derive(Debug)]
 pub struct Credentials {
-    username: String,
-    password: String,
-    token: TempToken,
+    sender: mpsc::Sender<TokenRequest>,
 }
 
 /// Authentication error
@@ -70,11 +74,26 @@ impl Credentials {
     pub async fn new((username, password): (String, String), client: &Client) -> LoginResult<Self> {
         let token = TempToken::new(Self::login((&username, &password), client).await?);
 
-        Ok(Self {
-            username,
-            password,
-            token,
-        })
+        let (sender, mut receiver) = mpsc::channel::<TokenRequest>(10);
+
+        tokio::spawn(async move {
+            let mut store = token;
+
+            while let Some((client, sender)) = receiver.recv().await {
+                let token = if let Some(token) = store.get() {
+                    Ok(token.to_owned())
+                } else {
+                    let token = Self::login((&username, &password), &client).await;
+                    token.map(|token| {
+                        store = TempToken::new(token);
+                        store.token.clone()
+                    })
+                };
+                sender.send(token).unwrap();
+            }
+        });
+
+        Ok(Self { sender })
     }
 
     /// Get token, and renew in case it expired
@@ -84,19 +103,13 @@ impl Credentials {
     ///
     /// # Panics
     /// Panics if token expires somehow (shouldn't)
-    pub async fn get_token(&mut self, client: &Client) -> LoginResult<&str> {
-        if self.token.expired() {
-            self.renew(client).await?;
-        }
-        let tkn = self.token.get().unwrap();
-        Ok(tkn)
-    }
-
-    /// Renew token
-    async fn renew(&mut self, client: &Client) -> LoginResult<()> {
-        let new_token = Self::login((&self.username, &self.password), client).await?;
-        self.token = TempToken::new(new_token);
-        Ok(())
+    pub async fn get_token(&self, client: Arc<Client>) -> LoginResult<String> {
+        let (tx, rx) = oneshot::channel();
+        self.sender
+            .send((client, tx))
+            .await
+            .expect("failed to send token request");
+        rx.await.unwrap()
     }
 
     // Issue new token from api
@@ -130,7 +143,7 @@ impl Credentials {
 }
 
 /// Authentication types
-#[derive(Debug, PartialEq, Eq, Hash, Clone)]
+#[derive(Debug)]
 pub enum Auth {
     /// Username and password
     Credentials(Credentials),
@@ -143,10 +156,10 @@ impl Auth {
     ///
     /// # Errors
     /// If token renew fails
-    pub async fn get_token(&mut self, client: &Client) -> LoginResult<&str> {
+    pub async fn get_token(&self, client: Arc<Client>) -> LoginResult<Cow<'_, String>> {
         match self {
-            Self::Token(token) => Ok(token),
-            Self::Credentials(creds) => creds.get_token(client).await,
+            Self::Token(token) => Ok(Cow::Borrowed(token)),
+            Self::Credentials(creds) => Ok(Cow::Owned(creds.get_token(client.clone()).await?)),
         }
     }
 

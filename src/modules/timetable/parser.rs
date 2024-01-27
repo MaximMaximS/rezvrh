@@ -30,8 +30,7 @@ static DAY_DATE_SELECTOR: Lazy<Selector> =
     Lazy::new(|| Selector::parse("span.bk-day-date").unwrap());
 static DAY_LESSON_SELECTOR: Lazy<Selector> =
     Lazy::new(|| Selector::parse("div.bk-timetable-cell").unwrap());
-static DAY_ITEM_SELECTOR: Lazy<Selector> =
-    Lazy::new(|| Selector::parse("div.day-item").unwrap());
+static DAY_ITEM_SELECTOR: Lazy<Selector> = Lazy::new(|| Selector::parse("div.day-item").unwrap());
 
 /// Error that can occur while parsing hour
 #[derive(Debug, Error)]
@@ -100,7 +99,7 @@ impl Lesson {
         let Some(item) = item else {
             return Ok(None);
         };
-        
+
         Ok(Some(Self {}))
     }
 }
