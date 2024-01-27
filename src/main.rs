@@ -23,6 +23,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     choices.sort();
     let select = Select::new("Choose class", choices).prompt()?;
     let class = options.get_by_left(select).unwrap();
-    bakalari.get_class(class, TimetableWhich::Actual).await?;
+    let table = bakalari.get_class(class, TimetableWhich::Actual).await?;
+    println!("{:#?}", table);
     Ok(())
 }

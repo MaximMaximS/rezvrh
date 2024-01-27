@@ -1,12 +1,10 @@
 use chrono::{Duration, NaiveDate, NaiveTime};
 use derive_more::Display;
 use grid::Grid;
-use lesson::Lesson;
 
 pub use parser::TimetableError as ParseTimetableError;
 
 mod api;
-mod lesson;
 mod parser;
 
 /// Which timetable to get
@@ -31,13 +29,24 @@ pub enum Type {
     Room,
 }
 
+#[derive(Debug)]
+pub struct Lesson {}
+
+#[derive(Debug)]
+pub struct Day {
+    date: Option<String>,
+    name: String,
+    lessons: Vec<Option<Lesson>>,
+}
+
+#[derive(Debug)]
 pub struct Hour {
     start: NaiveTime,
     duration: Duration,
 }
 
+#[derive(Debug)]
 pub struct Timetable {
-    start: NaiveDate,
     hours: Vec<Hour>,
-    lessons: Grid<Lesson>,
+    days: Vec<Day>,
 }
