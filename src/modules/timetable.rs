@@ -22,30 +22,33 @@ pub enum Which {
 }
 
 /// Timetable type
-#[derive(Debug, Display, PartialEq, Eq, Hash, Clone, Copy)]
-pub enum Type {
-    Teacher,
-    Class,
-    Room,
+#[derive(Debug, Display, PartialEq, Eq, Hash, Clone)]
+pub enum Type<'a> {
+    #[display("teacher/{_0}")]
+    Teacher(&'a str),
+    #[display("class/{_0}")]
+    Class(&'a str),
+    #[display("room/{_0}")]
+    Room(&'a str),
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub struct Lesson {}
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub struct Day {
     date: Option<String>,
     name: String,
     lessons: Vec<Option<Lesson>>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub struct Hour {
     start: NaiveTime,
     duration: Duration,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub struct Timetable {
     hours: Vec<Hour>,
     days: Vec<Day>,

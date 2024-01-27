@@ -1,8 +1,8 @@
-use std::fs;
+use std::{fs};
 
 use inquire::Select;
 use reqwest::Url;
-use rezvrh::{Bakalari, TimetableWhich};
+use rezvrh::{Bakalari, Type, Which};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
@@ -18,12 +18,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let url = Url::parse("https://ssps.bakalari.cz").unwrap();
     let mut bakalari = Bakalari::from_creds((conf.username, conf.password), url).await?;
     bakalari.test().await?;
-    let options = bakalari.get_classes().await?;
-    let mut choices = options.left_values().collect::<Vec<_>>();
+    let options = bakalari.get_classes();
+    let mut choices = options.keys().collect::<Vec<_>>();
     choices.sort();
     let select = Select::new("Choose class", choices).prompt()?;
-    let class = options.get_by_left(select).unwrap();
-    let table = bakalari.get_class(class, TimetableWhich::Actual).await?;
-    println!("{:#?}", table);
+    let class = options.get(select).unwrap();
+    let table = bakalari.get_timetable(Which::Actual, &Type::Class(class)).await?;
+    println!("{table:#?}");
     Ok(())
 }
