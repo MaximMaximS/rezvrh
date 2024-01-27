@@ -32,13 +32,39 @@ pub enum Type<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
-pub struct Lesson {}
+pub enum Lesson {
+    Regular {
+        class: String,
+        subject: String,
+        abbr: String,
+        teacher: String,
+        teacher_abbr: Option<String>,
+        room: String,
+        group: Option<String>,
+        topic: Option<String>,
+    },
+    Substitution {
+        class: String,
+        subject: String,
+        abbr: String,
+        teacher: String,
+        teacher_abbr: Option<String>,
+        room: String,
+        group: Option<String>,
+        topic: Option<String>,
+    },
+    Canceled,
+    Absent {
+        info: String,
+        abbr: String,
+    },
+}
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub struct Day {
     date: Option<String>,
     name: String,
-    lessons: Vec<Option<Lesson>>,
+    lessons: Vec<Vec<Lesson>>,
 }
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]

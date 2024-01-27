@@ -1,3 +1,5 @@
+use tokio::time::Instant;
+
 use super::super::api::{RequestError, RequestResult};
 use super::super::bakalari::Bakalari;
 use super::{Timetable, Type, Which};
@@ -55,6 +57,12 @@ impl Bakalari {
 
         let html = res.text().await?;
 
-        Ok(Timetable::parse(&html, timetable_type)?)
+        let start = Instant::now();
+
+        let res = Ok(Timetable::parse(&html, timetable_type)?);
+
+        println!("parsing took {:?}", start.elapsed());
+
+        res
     }
 }

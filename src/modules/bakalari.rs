@@ -1,8 +1,8 @@
-use std::{borrow::Cow, collections::HashMap, sync::Arc};
-
+use super::timetable::Type;
 use once_cell::sync::Lazy;
 use reqwest::{redirect::Policy, Client as ReqwestClient, Url};
 use scraper::{Html, Selector};
+use std::{borrow::Cow, collections::HashMap, sync::Arc};
 
 use super::{
     api::RequestError,
@@ -55,24 +55,75 @@ pub struct Bakalari {
 
 static CLASSES_SELECTOR: Lazy<Selector> =
     Lazy::new(|| Selector::parse("select#selectedClass > option[value]").unwrap());
+static TEACHERS_SELECTOR: Lazy<Selector> =
+    Lazy::new(|| Selector::parse("select#selectedTeacher > option[value]").unwrap());
+static ROOMS_SELECTOR: Lazy<Selector> =
+    Lazy::new(|| Selector::parse("select#selectedRoom > option[value]").unwrap());
 
 impl Bakalari {
     /// Get classes
     #[must_use]
-    pub const fn get_classes(&self) -> &HashMap<String, String> {
-        &self.classes
+    pub fn get_classes(&self) -> Vec<String> {
+        self.classes
+            .keys()
+            .map(std::borrow::ToOwned::to_owned)
+            .collect()
+    }
+
+    /// Get class
+    #[must_use]
+    pub fn get_class(&self, class: &str) -> Option<Type> {
+        self.classes.get(class).map(|id| Type::Class(id))
     }
 
     /// Get teachers
     #[must_use]
-    pub const fn get_teachers(&self) -> &HashMap<String, String> {
-        &self.teachers
+    pub fn get_teachers(&self) -> Vec<String> {
+        self.teachers
+            .keys()
+            .map(std::borrow::ToOwned::to_owned)
+            .collect()
+    }
+
+    /// Get teacher
+    #[must_use]
+    pub fn get_teacher(&self, teacher: &str) -> Option<Type> {
+        self.teachers.get(teacher).map(|id| Type::Teacher(id))
     }
 
     /// Get rooms
     #[must_use]
-    pub const fn get_rooms(&self) -> &HashMap<String, String> {
-        &self.rooms
+    pub fn get_rooms(&self) -> Vec<String> {
+        self.rooms
+            .keys()
+            .map(std::borrow::ToOwned::to_owned)
+            .collect()
+    }
+
+    /// Get room
+    #[must_use]
+    pub fn get_room(&self, room: &str) -> Option<Type> {
+        self.rooms.get(room).map(|id| Type::Room(id))
+    }
+
+    fn get_map(
+        document: &Html,
+        selector: &Selector,
+    ) -> Result<HashMap<String, String>, RequestError> {
+        document
+            .select(selector)
+            .map(|e| {
+                let mut texts = e.text();
+                let name = texts
+                    .next()
+                    .ok_or_else(|| RequestError::UnknownResponse("missing class name"))?;
+                let id = e
+                    .attr("value")
+                    .ok_or_else(|| RequestError::UnknownResponse("missing value attr"))?;
+
+                Ok::<_, RequestError>((name.trim().to_owned(), id.trim().to_owned()))
+            })
+            .collect::<Result<HashMap<_, _>, _>>()
     }
 
     /// Get classes, teachers and rooms
@@ -99,24 +150,15 @@ impl Bakalari {
 
         let text = res.text().await?;
 
+        tokio::fs::write("/tmp/test.html", &text).await.unwrap();
+
         let document = Html::parse_document(&text);
 
-        let classes = document
-            .select(&CLASSES_SELECTOR)
-            .map(|e| {
-                let mut texts = e.text();
-                let name = texts
-                    .next()
-                    .ok_or_else(|| RequestError::UnknownResponse("missing class name"))?;
-                let id = e
-                    .attr("value")
-                    .ok_or_else(|| RequestError::UnknownResponse("missing value attr"))?;
+        let classes = Self::get_map(&document, &CLASSES_SELECTOR)?;
+        let teachers = Self::get_map(&document, &TEACHERS_SELECTOR)?;
+        let rooms = Self::get_map(&document, &ROOMS_SELECTOR)?;
 
-                Ok::<_, RequestError>((name.trim().to_owned(), id.trim().to_owned()))
-            })
-            .collect::<Result<HashMap<_, _>, _>>()?;
-
-        Ok((classes, HashMap::new(), HashMap::new()))
+        Ok((classes, teachers, rooms))
     }
 
     /// Get client
