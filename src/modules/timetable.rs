@@ -1,5 +1,6 @@
-use chrono::{Duration, NaiveTime};
+use chrono::NaiveTime;
 use derive_more::Display;
+use serde::{Deserialize, Serialize};
 
 pub use parser::TimetableError as ParseTimetableError;
 
@@ -20,6 +21,13 @@ pub enum Which {
     Next,
 }
 
+#[derive(Debug, Display, PartialEq, Eq, Hash, Clone)]
+pub enum RawType {
+    Teacher,
+    Class,
+    Room,
+}
+
 /// Timetable type
 #[derive(Debug, Display, PartialEq, Eq, Hash, Clone)]
 pub enum Type<'a> {
@@ -31,7 +39,7 @@ pub enum Type<'a> {
     Room(&'a str),
 }
 
-#[derive(Debug, PartialEq, Eq, Hash, Clone)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Hash, Clone)]
 pub enum Lesson {
     Regular {
         class: String,
@@ -60,20 +68,20 @@ pub enum Lesson {
     },
 }
 
-#[derive(Debug, PartialEq, Eq, Hash, Clone)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Hash, Clone)]
 pub struct Day {
     date: Option<String>,
     name: String,
     lessons: Vec<Vec<Lesson>>,
 }
 
-#[derive(Debug, PartialEq, Eq, Hash, Clone)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Hash, Clone)]
 pub struct Hour {
     start: NaiveTime,
-    duration: Duration,
+    duration: i64,
 }
 
-#[derive(Debug, PartialEq, Eq, Hash, Clone)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Hash, Clone)]
 pub struct Timetable {
     hours: Vec<Hour>,
     days: Vec<Day>,

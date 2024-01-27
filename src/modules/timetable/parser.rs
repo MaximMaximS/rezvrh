@@ -85,6 +85,7 @@ impl Hour {
         let to = single_iter(to.text(), || HourError::NoToText)?;
         let to = NaiveTime::parse_from_str(to, "%H:%M").map_err(HourError::ParseTo)?;
         let duration = to - from;
+        let duration = duration.num_minutes();
 
         Ok(Self {
             start: from,
