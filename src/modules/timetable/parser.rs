@@ -3,7 +3,6 @@ use chrono::NaiveTime;
 use once_cell::sync::Lazy;
 use scraper::{Element, ElementRef, Html, Selector};
 use serde::{Deserialize, Serialize};
-use std::fs;
 use thiserror::Error;
 
 // Get first element from iterator, or return error if there is more than one or none
@@ -350,7 +349,6 @@ pub enum DayError {
 
 impl Day {
     pub fn parse(day: ElementRef, timetable_type: &Type) -> Result<Self, DayError> {
-        fs::write("/tmp/day", day.html()).unwrap();
         let name = single_iter(day.select(&DAY_NAME_SELECTOR), || DayError::NoName)?;
         let name = single_iter(name.text(), || DayError::NoNameText)?
             .trim()
@@ -386,8 +384,6 @@ pub enum TimetableError {
 
 impl Timetable {
     pub fn parse(html: &str, table_type: &Type) -> Result<Self, TimetableError> {
-        fs::write("/tmp/timetable", html).unwrap();
-
         let document = Html::parse_document(html);
 
         let hours = document

@@ -1,20 +1,34 @@
-use tokio::fs;
+use clap::Parser;
 use inquire::Select;
 use reqwest::Url;
 use rezvrh::{Bakalari, Type, Which};
 use serde::{Deserialize, Serialize};
+use tokio::fs;
 
 #[derive(Serialize, Deserialize)]
 pub struct Config {
+    url: String,
     username: String,
     password: String,
 }
 
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+struct Args {
+    /// Path to config file
+    #[arg(short, long)]
+    config: String,
+}
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let s = fs::read_to_string("config.json").await.expect("failed to load config.json");
+    let args = Args::parse();
+
+    let s = fs::read_to_string(args.config)
+        .await
+        .expect("failed to load config.json");
     let conf = serde_json::from_str::<Config>(&s).expect("failed to parse config.json");
-    let url = Url::parse("https://ssps.bakalari.cz").unwrap();
+    let url = Url::parse(&conf.url)?;
     let bakalari = Bakalari::from_creds((conf.username, conf.password), url).await?;
     bakalari.test().await?;
 

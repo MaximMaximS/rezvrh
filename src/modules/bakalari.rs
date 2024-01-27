@@ -150,8 +150,6 @@ impl Bakalari {
 
         let text = res.text().await?;
 
-        tokio::fs::write("/tmp/test.html", &text).await.unwrap();
-
         let document = Html::parse_document(&text);
 
         let classes = Self::get_map(&document, &CLASSES_SELECTOR)?;
