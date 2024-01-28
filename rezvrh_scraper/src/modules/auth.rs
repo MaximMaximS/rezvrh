@@ -31,6 +31,7 @@ pub enum Auth {
     Credentials(Credentials),
     // Token (might expire)
     Token(String),
+    None,
 }
 
 impl Auth {
@@ -42,6 +43,7 @@ impl Auth {
         match self {
             Self::Token(token) => Ok(Cow::Borrowed(token)),
             Self::Credentials(creds) => Ok(Cow::Owned(creds.get_token(client.clone()).await?)),
+            Self::None => Ok(Cow::Owned(String::new())),
         }
     }
 

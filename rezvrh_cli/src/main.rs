@@ -8,8 +8,8 @@ use tokio::fs;
 #[derive(Serialize, Deserialize)]
 pub struct Config {
     url: String,
-    username: String,
-    password: String,
+    username: Option<String>,
+    password: Option<String>,
 }
 
 #[derive(Parser, Debug)]
@@ -25,11 +25,14 @@ async fn main() -> anyhow::Result<()> {
     let args = Args::parse();
 
     let s = fs::read_to_string(args.config)
-        .await
-        .expect("failed to load config.json");
-    let conf = serde_json::from_str::<Config>(&s).expect("failed to parse config.json");
+        .await?;
+    let conf = serde_json::from_str::<Config>(&s)?;
     let url = Url::parse(&conf.url)?;
-    let bakalari = Bakalari::from_creds((conf.username, conf.password), url).await?;
+    let bakalari = if let (Some(username), Some(password)) = (conf.username, conf.password) {
+        Bakalari::from_creds((username, password), url).await?
+    } else {
+        Bakalari::no_auth(url).await?
+    };
     bakalari.test().await?;
 
     let typ = Select::new("Choose type", vec![Type::Teacher, Type::Class, Type::Room]).prompt()?;
@@ -50,8 +53,7 @@ async fn main() -> anyhow::Result<()> {
         Type::Teacher => bakalari.get_teacher(&select),
         Type::Class => bakalari.get_class(&select),
         Type::Room => bakalari.get_room(&select),
-    }
-    .unwrap();
+    }.unwrap();
 
     let table = bakalari.get_timetable(which, &selection).await?;
 

@@ -102,6 +102,23 @@ impl Bakalari {
         })
     }
 
+    /// Create Bakalari instance without authentication
+    /// 
+    /// # Errors
+    /// Returns error if authentication fails
+    pub async fn no_auth(url: Url) -> Result<Self, RequestError> {
+        let client = Arc::new(Client::new(url));
+        let (classes, teachers, rooms) =
+            get_info(client.reqwest_client(), client.url(), "").await?;
+        Ok(Self {
+            client,
+            auth: Auth::None,
+            classes,
+            teachers,
+            rooms,
+        })
+    }
+
     /// Get token
     ///
     /// # Errors
