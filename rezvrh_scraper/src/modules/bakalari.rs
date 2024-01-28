@@ -103,7 +103,7 @@ impl Bakalari {
     }
 
     /// Create Bakalari instance without authentication
-    /// 
+    ///
     /// # Errors
     /// Returns error if authentication fails
     pub async fn no_auth(url: Url) -> Result<Self, RequestError> {

@@ -26,7 +26,7 @@ pub enum Which {
     Next,
 }
 
-#[derive(Debug, Display, PartialEq, Eq, Hash, Clone)]
+#[derive(Debug, Display, PartialEq, Eq, Hash, Clone, Copy)]
 pub enum RawType {
     Teacher,
     Class,

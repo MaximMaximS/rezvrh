@@ -1,4 +1,4 @@
-use crate::{modules::timetable::Type, Bakalari};
+use crate::{modules::timetable::Type, Bakalari, Type as RawType};
 
 impl Bakalari {
     /// Get list of classes
@@ -44,5 +44,25 @@ impl Bakalari {
     #[must_use]
     pub fn get_room(&self, room: &str) -> Option<Type> {
         self.rooms.get(room).map(|id| Type::Room(id))
+    }
+
+    /// Get list of objects
+    #[must_use]
+    pub fn get_objects(&self, typ: RawType) -> Vec<String> {
+        match typ {
+            RawType::Class => self.get_classes(),
+            RawType::Teacher => self.get_teachers(),
+            RawType::Room => self.get_rooms(),
+        }
+    }
+
+    /// Get selector
+    #[must_use]
+    pub fn get_selector(&self, typ: RawType, name: &str) -> Option<Type> {
+        match typ {
+            RawType::Class => self.get_class(name),
+            RawType::Teacher => self.get_teacher(name),
+            RawType::Room => self.get_room(name),
+        }
     }
 }

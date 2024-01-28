@@ -53,19 +53,10 @@ async fn main() -> anyhow::Result<()> {
     )
     .prompt()?;
 
-    let mut options = match typ {
-        Type::Teacher => bakalari.get_teachers(),
-        Type::Class => bakalari.get_classes(),
-        Type::Room => bakalari.get_rooms(),
-    };
+    let mut options = bakalari.get_objects(typ);
     options.sort();
     let select = Select::new("Choose object", options).prompt()?;
-    let selection = match typ {
-        Type::Teacher => bakalari.get_teacher(&select),
-        Type::Class => bakalari.get_class(&select),
-        Type::Room => bakalari.get_room(&select),
-    }
-    .unwrap();
+    let selection = bakalari.get_selector(typ, &select).unwrap();
 
     let table = bakalari.get_timetable(which, &selection).await?;
 
