@@ -16,13 +16,10 @@ mod util;
 #[derive(Debug, Display, PartialEq, Eq, Hash, Clone, Copy)]
 pub enum Which {
     /// Permanent timetable
-    #[display("permanent")]
     Permanent,
     /// Timetable for current week
-    #[display("actual")]
     Actual,
     /// Timetable for next week
-    #[display("next")]
     Next,
 }
 
