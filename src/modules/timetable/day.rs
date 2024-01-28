@@ -5,6 +5,7 @@ use scraper::{ElementRef, Selector};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
+/// Struct that hold one day of timetable
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Day {
     date: Option<String>,
@@ -12,6 +13,7 @@ pub struct Day {
     lessons: Vec<Vec<Lesson>>,
 }
 
+/// Day parse error
 #[derive(Debug, Error)]
 pub enum ParseError {
     #[error("no name")]
@@ -36,6 +38,7 @@ static DAY_CELL_SELECTOR: Lazy<Selector> =
     Lazy::new(|| Selector::parse("div.bk-timetable-cell").unwrap());
 
 impl Day {
+    /// Parse day from html
     pub fn parse(day: ElementRef, timetable_type: &Type) -> Result<Self, ParseError> {
         let name = single_iter(day.select(&DAY_NAME_SELECTOR), || ParseError::NoName)?;
         let name = single_iter(name.text(), || ParseError::NoNameText)?

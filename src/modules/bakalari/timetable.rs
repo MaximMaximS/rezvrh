@@ -2,7 +2,7 @@ use super::{Bakalari, RequestResult};
 use crate::modules::timetable::{Timetable, Type, Which};
 
 impl Bakalari {
-    /// Get timetable
+    /// Get specific timetable
     ///
     /// # Errors
     /// If request fails
@@ -29,8 +29,6 @@ impl Bakalari {
 
         let html = res.text().await?;
 
-        let res = Ok(Timetable::parse(&html, timetable_type)?);
-
-        res
+        Ok(Timetable::parse(&html, timetable_type)?)
     }
 }

@@ -1,3 +1,5 @@
+use self::parser::subject;
+
 use super::{
     util::{empty_string_as_none, single_iter},
     Type,
@@ -7,6 +9,9 @@ use scraper::{Element, ElementRef, Selector};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
+mod parser;
+
+/// Struct that hold one lesson of timetable
 #[derive(Debug, Serialize, Deserialize)]
 pub enum Lesson {
     Regular {
@@ -36,13 +41,15 @@ pub enum Lesson {
     },
 }
 
+/// Data that is stored in data-detail attribute
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(tag = "type")]
 enum LessonData {
     #[serde(rename = "atom")]
     Regular {
+        #[serde(rename = "subjecttext")]
         #[serde(deserialize_with = "empty_string_as_none")]
-        subjecttext: Option<String>,
+        subject_text: Option<String>,
         #[serde(deserialize_with = "empty_string_as_none")]
         teacher: Option<String>,
         #[serde(deserialize_with = "empty_string_as_none")]
@@ -81,6 +88,7 @@ enum LessonData {
     },
 }
 
+/// Lesson parse error
 #[derive(Debug, Error)]
 pub enum ParseError {
     #[error("missing data-detail attribute")]
@@ -98,155 +106,123 @@ pub enum ParseError {
 static LESSON_SELECTOR: Lazy<Selector> =
     Lazy::new(|| Selector::parse("div.day-item-hover").unwrap());
 static LESSON_ABBR_SELECTOR: Lazy<Selector> = Lazy::new(|| Selector::parse("div.middle").unwrap());
-static LESSON_TEACHER_ABBR_SELECTOR: Lazy<Selector> =
-    Lazy::new(|| Selector::parse("div.bottom").unwrap());
+
 static DAY_ITEM_SELECTOR: Lazy<Selector> = Lazy::new(|| Selector::parse("div.day-item").unwrap());
 
-impl Lesson {
-    fn get_prop(
-        elem: ElementRef,
-        selector: &Selector,
-        prop: &'static str,
-    ) -> Result<String, ParseError> {
-        let elem = single_iter(elem.select(selector), || ParseError::MissingProperty(prop))?;
-        let elem = single_iter(elem.text(), || ParseError::MissingProperty(prop))?;
-        Ok(elem.trim().to_owned())
-    }
-    #[allow(clippy::too_many_lines)]
-    fn parse_single(lesson: ElementRef, timetable_type: &Type) -> Result<Self, ParseError> {
-        let data = lesson
-            .value()
-            .attr("data-detail")
-            .ok_or(ParseError::NoData)?;
-        let data = serde_json::from_str::<LessonData>(data)?;
+fn get_prop(
+    elem: ElementRef,
+    selector: &Selector,
+    prop: &'static str,
+) -> Result<String, ParseError> {
+    let elem = single_iter(elem.select(selector), || ParseError::MissingProperty(prop))?;
+    let elem = single_iter(elem.text(), || ParseError::MissingProperty(prop))?;
+    Ok(elem.trim().to_owned())
+}
 
-        match data {
-            LessonData::Regular {
-                subjecttext,
-                teacher,
-                room,
-                group,
-                theme,
-                notice: _,
-                changeinfo: _,
-                homeworks: _,
-                absencetext: _,
-                has_absent: _,
-                absent_info_text: _,
-            } => {
-                let substituion = lesson.has_class(
-                    &"pink".into(),
-                    scraper::CaseSensitivity::AsciiCaseInsensitive,
-                );
+fn parse_single(lesson: ElementRef, timetable_type: &Type) -> Result<Lesson, ParseError> {
+    let data = lesson
+        .value()
+        .attr("data-detail")
+        .ok_or(ParseError::NoData)?;
+    let data = serde_json::from_str::<LessonData>(data)?;
 
-                let subjecttext = subjecttext.ok_or(ParseError::MissingProperty("subjecttext"))?;
+    match data {
+        LessonData::Regular {
+            subject_text,
+            teacher,
+            room,
+            group,
+            theme,
+            notice: _,
+            changeinfo: _,
+            homeworks: _,
+            absencetext: _,
+            has_absent: _,
+            absent_info_text: _,
+        } => {
+            let substituion = lesson.has_class(
+                &"pink".into(),
+                scraper::CaseSensitivity::AsciiCaseInsensitive,
+            );
 
-                let (subject, _) = subjecttext
-                    .split_once(" | ")
-                    .ok_or_else(|| ParseError::BadSubjectText(subjecttext.clone()))?;
-                if subject.is_empty() {
-                    return Err(ParseError::BadSubjectText(subjecttext.clone()));
-                }
-                let subject = subject.trim().to_owned();
+            let subject = subject(subject_text)?;
 
-                let abbr = Self::get_prop(lesson, &LESSON_ABBR_SELECTOR, "abbr")?;
+            let abbr = get_prop(lesson, &LESSON_ABBR_SELECTOR, "abbr")?;
 
-                let teacher = match teacher {
-                    Some(t) => t,
-                    None => {
-                        if let Type::Teacher(t) = timetable_type {
-                            t.to_owned().to_owned()
-                        } else {
-                            return Err(ParseError::MissingProperty("teacher"));
-                        }
-                    }
-                };
+            let (teacher, teacher_abbr) = parser::teacher(lesson, teacher, timetable_type)?;
 
-                let teacher_abbr =
-                    Self::get_prop(lesson, &LESSON_TEACHER_ABBR_SELECTOR, "teacher_abbr");
+            let room = room
+                .ok_or(ParseError::MissingProperty("room"))?
+                .trim()
+                .to_owned();
 
-                let teacher_abbr = match teacher_abbr {
-                    Ok(abbr) => Some(abbr),
-                    Err(e) => {
-                        if let Type::Teacher(_) = timetable_type {
-                            None
-                        } else {
-                            return Err(e);
-                        }
-                    }
-                };
+            let topic = theme;
 
-                let room = room
-                    .ok_or(ParseError::MissingProperty("room"))?
-                    .trim()
-                    .to_owned();
+            let class = if let Type::Class(class) = timetable_type {
+                class.to_owned().to_owned()
+            } else {
+                group
+                    .as_ref()
+                    .ok_or(ParseError::MissingProperty("group"))?
+                    .to_owned()
+            };
 
-                let topic = theme;
-
-                let class = if let Type::Class(class) = timetable_type {
-                    class.to_owned().to_owned()
-                } else {
-                    group
-                        .as_ref()
-                        .ok_or(ParseError::MissingProperty("group"))?
-                        .to_owned()
-                };
-
-                if substituion {
-                    Ok(Self::Substitution {
-                        class,
-                        subject,
-                        abbr,
-                        teacher,
-                        teacher_abbr,
-                        room,
-                        group,
-                        topic,
-                    })
-                } else {
-                    Ok(Self::Regular {
-                        class,
-                        subject,
-                        abbr,
-                        teacher,
-                        teacher_abbr,
-                        room,
-                        group,
-                        topic,
-                    })
-                }
+            if substituion {
+                Ok(Lesson::Substitution {
+                    class,
+                    subject,
+                    abbr,
+                    teacher,
+                    teacher_abbr,
+                    room,
+                    group,
+                    topic,
+                })
+            } else {
+                Ok(Lesson::Regular {
+                    class,
+                    subject,
+                    abbr,
+                    teacher,
+                    teacher_abbr,
+                    room,
+                    group,
+                    topic,
+                })
             }
-            LessonData::Absent {
-                info_absent_name,
-                absent_info,
-            } => {
-                if lesson.has_class(
-                    &"green".into(),
-                    scraper::CaseSensitivity::AsciiCaseInsensitive,
-                ) {
-                    let info =
-                        info_absent_name.ok_or(ParseError::MissingProperty("info_absent_name"))?;
+        }
+        LessonData::Absent {
+            info_absent_name,
+            absent_info,
+        } => {
+            if lesson.has_class(
+                &"green".into(),
+                scraper::CaseSensitivity::AsciiCaseInsensitive,
+            ) {
+                let info =
+                    info_absent_name.ok_or(ParseError::MissingProperty("info_absent_name"))?;
 
-                    let abbr = absent_info.ok_or(ParseError::MissingProperty("absent_info"))?;
+                let abbr = absent_info.ok_or(ParseError::MissingProperty("absent_info"))?;
 
-                    Ok(Self::Absent { info, abbr })
-                } else {
-                    Err(ParseError::DataTypeMismatch)
-                }
+                Ok(Lesson::Absent { info, abbr })
+            } else {
+                Err(ParseError::DataTypeMismatch)
             }
-            LessonData::Canceled { subjecttext: _ } => {
-                if lesson.has_class(
-                    &"pink".into(),
-                    scraper::CaseSensitivity::AsciiCaseInsensitive,
-                ) {
-                    Ok(Self::Canceled)
-                } else {
-                    Err(ParseError::DataTypeMismatch)
-                }
+        }
+        LessonData::Canceled { subjecttext: _ } => {
+            if lesson.has_class(
+                &"pink".into(),
+                scraper::CaseSensitivity::AsciiCaseInsensitive,
+            ) {
+                Ok(Lesson::Canceled)
+            } else {
+                Err(ParseError::DataTypeMismatch)
             }
         }
     }
+}
 
+impl Lesson {
     pub fn parse(lesson: ElementRef, timetable_type: &Type) -> Result<Vec<Self>, ParseError> {
         let item = lesson.select(&DAY_ITEM_SELECTOR).next();
         let Some(item) = item else {
@@ -255,7 +231,7 @@ impl Lesson {
 
         let lessons = item
             .select(&LESSON_SELECTOR)
-            .map(|lesson| Self::parse_single(lesson, timetable_type))
+            .map(|lesson| parse_single(lesson, timetable_type))
             .collect::<Result<Vec<_>, _>>()?;
 
         Ok(lessons)

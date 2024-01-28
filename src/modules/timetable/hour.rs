@@ -5,12 +5,14 @@ use scraper::{ElementRef, Selector};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
+/// Struct that hold one hour of timetable (header)
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Hour {
     start: NaiveTime,
     duration: i64,
 }
 
+/// Hour parse error
 #[derive(Debug, Error)]
 pub enum ParseError {
     #[error("no number")]
@@ -41,6 +43,7 @@ static NUM_SELECTOR: Lazy<Selector> = Lazy::new(|| Selector::parse("div.num").un
 static TIMES_SELECTOR: Lazy<Selector> = Lazy::new(|| Selector::parse("div.hour > span").unwrap());
 
 impl Hour {
+    /// Parse hour from html
     pub fn parse(hour: ElementRef, i: usize) -> Result<Self, ParseError> {
         let num = single_iter(hour.select(&NUM_SELECTOR), || ParseError::NoNum)?;
         let num = single_iter(num.text(), || ParseError::NoNumText)?;

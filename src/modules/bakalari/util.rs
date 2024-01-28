@@ -4,6 +4,7 @@ use reqwest::{Client as ReqwestClient, Url};
 use scraper::{Html, Selector};
 use std::collections::HashMap;
 
+/// Extract options for specified selector
 pub fn get_map(
     document: &Html,
     selector: &Selector,

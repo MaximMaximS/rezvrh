@@ -1,6 +1,13 @@
 use super::{Bakalari, RequestError, RequestResult};
 
 impl Bakalari {
+    /// Test if connection is working
+    ///
+    /// # Errors
+    /// Returns error if request fails
+    ///
+    /// # Panics
+    /// If url join fails (shouldn't)
     pub async fn test(&self) -> RequestResult<()> {
         let client = self.client();
         let res = client

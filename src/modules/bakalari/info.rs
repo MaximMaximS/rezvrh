@@ -1,7 +1,7 @@
 use crate::{modules::timetable::Type, Bakalari};
 
 impl Bakalari {
-    /// Get classes
+    /// Get list of classes
     #[must_use]
     pub fn get_classes(&self) -> Vec<String> {
         self.classes
@@ -10,13 +10,13 @@ impl Bakalari {
             .collect()
     }
 
-    /// Get class
+    /// Get class selector
     #[must_use]
     pub fn get_class(&self, class: &str) -> Option<Type> {
         self.classes.get(class).map(|id| Type::Class(id))
     }
 
-    /// Get teachers
+    /// Get list of teachers
     #[must_use]
     pub fn get_teachers(&self) -> Vec<String> {
         self.teachers
@@ -25,13 +25,13 @@ impl Bakalari {
             .collect()
     }
 
-    /// Get teacher
+    /// Get teacher selector
     #[must_use]
     pub fn get_teacher(&self, teacher: &str) -> Option<Type> {
         self.teachers.get(teacher).map(|id| Type::Teacher(id))
     }
 
-    /// Get rooms
+    /// Get list of rooms
     #[must_use]
     pub fn get_rooms(&self) -> Vec<String> {
         self.rooms
@@ -40,7 +40,7 @@ impl Bakalari {
             .collect()
     }
 
-    /// Get room
+    /// Get room selector
     #[must_use]
     pub fn get_room(&self, room: &str) -> Option<Type> {
         self.rooms.get(room).map(|id| Type::Room(id))
