@@ -105,7 +105,7 @@ pub enum ParseError {
 
 static LESSON_SELECTOR: Lazy<Selector> =
     Lazy::new(|| Selector::parse("div.day-item-hover").unwrap());
-static LESSON_ABBR_SELECTOR: Lazy<Selector> = Lazy::new(|| Selector::parse("div.middle").unwrap());
+static ABBR_SELECTOR: Lazy<Selector> = Lazy::new(|| Selector::parse("div.middle").unwrap());
 
 static DAY_ITEM_SELECTOR: Lazy<Selector> = Lazy::new(|| Selector::parse("div.day-item").unwrap());
 
@@ -147,7 +147,7 @@ fn parse_single(lesson: ElementRef, timetable_type: &Type) -> Result<Lesson, Par
 
             let subject = subject(subject_text)?;
 
-            let abbr = get_prop(lesson, &LESSON_ABBR_SELECTOR, "abbr")?;
+            let abbr = get_prop(lesson, &ABBR_SELECTOR, "abbr")?;
 
             let (teacher, teacher_abbr) = parser::teacher(lesson, teacher, timetable_type)?;
 

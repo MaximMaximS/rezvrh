@@ -30,29 +30,29 @@ pub enum ParseError {
     Lesson(#[from] LessonParseError),
 }
 
-static DAY_NAME_SELECTOR: Lazy<Selector> =
+static NAME_SELECTOR: Lazy<Selector> =
     Lazy::new(|| Selector::parse("span.bk-day-day").unwrap());
-static DAY_DATE_SELECTOR: Lazy<Selector> =
+static DATE_SELECTOR: Lazy<Selector> =
     Lazy::new(|| Selector::parse("span.bk-day-date").unwrap());
-static DAY_CELL_SELECTOR: Lazy<Selector> =
+static CELL_SELECTOR: Lazy<Selector> =
     Lazy::new(|| Selector::parse("div.bk-timetable-cell").unwrap());
 
 impl Day {
     /// Parse day from html
     pub fn parse(day: ElementRef, timetable_type: &Type) -> Result<Self, ParseError> {
-        let name = single_iter(day.select(&DAY_NAME_SELECTOR), || ParseError::NoName)?;
+        let name = single_iter(day.select(&NAME_SELECTOR), || ParseError::NoName)?;
         let name = single_iter(name.text(), || ParseError::NoNameText)?
             .trim()
             .to_owned();
 
-        let mut dates = single_iter(day.select(&DAY_DATE_SELECTOR), || ParseError::NoDate)?.text();
+        let mut dates = single_iter(day.select(&DATE_SELECTOR), || ParseError::NoDate)?.text();
         let date = dates.next().map(|d| d.trim().to_owned());
         if date.is_some() && dates.next().is_some() {
             return Err(ParseError::NoDate);
         }
 
         let lessons = day
-            .select(&DAY_CELL_SELECTOR)
+            .select(&CELL_SELECTOR)
             .map(|lesson| Lesson::parse(lesson, timetable_type))
             .collect::<Result<Vec<_>, _>>()?;
 
