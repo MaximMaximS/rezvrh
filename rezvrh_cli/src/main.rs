@@ -1,9 +1,9 @@
-use std::path::PathBuf;
 use clap::Parser;
 use inquire::Select;
 use reqwest::Url;
 use rezvrh_scraper::{Bakalari, Type, Which};
 use serde::{Deserialize, Serialize};
+use std::path::PathBuf;
 use tokio::fs;
 
 #[derive(Serialize, Deserialize)]
@@ -17,8 +17,8 @@ pub struct Config {
 #[command(author, version, about, long_about = None)]
 struct Args {
     /// Path to config file
-    #[arg(short, long, value_name = "FILE", default_value = "config.json")]
-    config: PathBuf,
+    #[arg(short, long, value_name = "FILE")]
+    config: Option<PathBuf>,
 
     /// URL of Bakalari
     #[arg(short, long, value_name = "URL")]
@@ -31,9 +31,8 @@ async fn main() -> anyhow::Result<()> {
 
     let bakalari = if let Some(url) = args.url {
         Bakalari::no_auth(Url::parse(&url)?).await?
-    } else {
-        let s = fs::read_to_string(args.config)
-            .await?;
+    } else if let Some(config) = args.config {
+        let s = fs::read_to_string(config).await?;
         let conf = serde_json::from_str::<Config>(&s)?;
         let url = Url::parse(&conf.url)?;
         if let (Some(username), Some(password)) = (conf.username, conf.password) {
@@ -41,8 +40,10 @@ async fn main() -> anyhow::Result<()> {
         } else {
             Bakalari::no_auth(url).await?
         }
+    } else {
+        anyhow::bail!("No config file or URL provided")
     };
-    
+
     bakalari.test().await?;
 
     let typ = Select::new("Choose type", vec![Type::Teacher, Type::Class, Type::Room]).prompt()?;
@@ -63,7 +64,8 @@ async fn main() -> anyhow::Result<()> {
         Type::Teacher => bakalari.get_teacher(&select),
         Type::Class => bakalari.get_class(&select),
         Type::Room => bakalari.get_room(&select),
-    }.unwrap();
+    }
+    .unwrap();
 
     let table = bakalari.get_timetable(which, &selection).await?;
 
