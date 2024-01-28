@@ -1,14 +1,11 @@
 # rezvrh
 
-Bakalari scraper, written in rust. Very early stage of development, but it seems to work.
+Scraper na rozvrh hodin z Bakalářů.
+Asi nebude zatím moc funkční.
 
-First rust project, rushed and low effort, so it's really awful.
+## Použití
 
-## Usage
-
-Will probably get better in the future.
-
-Create config file
+Vytvořte soubor `config.json` s následujícím obsahem:
 
 ```json
 {
@@ -18,12 +15,12 @@ Create config file
 }
 ```
 
-Run the program
+Pak spusťte:
 
 ```bash
 rezvrh -c config.json
 ```
 
-This will create a `timetable.json` file in the current directory.
+Tím se vytvoří soubor `rozvrh.json` s rozvrhem.
 
-*This project is not affiliated with BAKALÁŘI software s.r.o.*
+*Tento projekt není spojen s firmou BAKALÁŘI software s.r.o.*
