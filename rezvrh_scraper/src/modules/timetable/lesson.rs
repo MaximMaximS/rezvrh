@@ -20,7 +20,7 @@ pub enum Lesson {
         abbr: String,
         teacher: String,
         teacher_abbr: Option<String>,
-        room: String,
+        room: Option<String>,
         group: Option<String>,
         topic: Option<String>,
     },
@@ -30,7 +30,7 @@ pub enum Lesson {
         abbr: String,
         teacher: String,
         teacher_abbr: Option<String>,
-        room: String,
+        room: Option<String>,
         group: Option<String>,
         topic: Option<String>,
     },
@@ -150,11 +150,6 @@ fn parse_single(lesson: ElementRef, timetable_type: &Type) -> Result<Lesson, Par
             let abbr = get_prop(lesson, &LESSON_ABBR_SELECTOR, "abbr")?;
 
             let (teacher, teacher_abbr) = parser::teacher(lesson, teacher, timetable_type)?;
-
-            let room = room
-                .ok_or(ParseError::MissingProperty("room"))?
-                .trim()
-                .to_owned();
 
             let topic = theme;
 

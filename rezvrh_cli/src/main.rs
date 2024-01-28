@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 use clap::Parser;
 use inquire::Select;
 use reqwest::Url;
@@ -16,23 +17,32 @@ pub struct Config {
 #[command(author, version, about, long_about = None)]
 struct Args {
     /// Path to config file
-    #[arg(short, long)]
-    config: String,
+    #[arg(short, long, value_name = "FILE", default_value = "config.json")]
+    config: PathBuf,
+
+    /// URL of Bakalari
+    #[arg(short, long, value_name = "URL")]
+    url: Option<String>,
 }
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let args = Args::parse();
 
-    let s = fs::read_to_string(args.config)
-        .await?;
-    let conf = serde_json::from_str::<Config>(&s)?;
-    let url = Url::parse(&conf.url)?;
-    let bakalari = if let (Some(username), Some(password)) = (conf.username, conf.password) {
-        Bakalari::from_creds((username, password), url).await?
+    let bakalari = if let Some(url) = args.url {
+        Bakalari::no_auth(Url::parse(&url)?).await?
     } else {
-        Bakalari::no_auth(url).await?
+        let s = fs::read_to_string(args.config)
+            .await?;
+        let conf = serde_json::from_str::<Config>(&s)?;
+        let url = Url::parse(&conf.url)?;
+        if let (Some(username), Some(password)) = (conf.username, conf.password) {
+            Bakalari::from_creds((username, password), url).await?
+        } else {
+            Bakalari::no_auth(url).await?
+        }
     };
+    
     bakalari.test().await?;
 
     let typ = Select::new("Choose type", vec![Type::Teacher, Type::Class, Type::Room]).prompt()?;
@@ -58,6 +68,8 @@ async fn main() -> anyhow::Result<()> {
     let table = bakalari.get_timetable(which, &selection).await?;
 
     fs::write("timetable.json", serde_json::to_string_pretty(&table)?).await?;
+
+    println!("Wrote timetable to timetable.json");
 
     Ok(())
 }
