@@ -1,11 +1,17 @@
-use chrono::NaiveTime;
+use day::ParseError as DayParseError;
 use derive_more::Display;
+use hour::ParseError as HourParseError;
+use once_cell::sync::Lazy;
+use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
-
-pub use parser::TimetableError as ParseTimetableError;
+use thiserror::Error;
+use {day::Day, hour::Hour};
 
 mod api;
-mod parser;
+mod day;
+mod hour;
+mod lesson;
+mod util;
 
 /// Which timetable to get
 #[derive(Debug, Display, PartialEq, Eq, Hash, Clone, Copy)]
@@ -39,50 +45,40 @@ pub enum Type<'a> {
     Room(&'a str),
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Hash, Clone)]
-pub enum Lesson {
-    Regular {
-        class: String,
-        subject: String,
-        abbr: String,
-        teacher: String,
-        teacher_abbr: Option<String>,
-        room: String,
-        group: Option<String>,
-        topic: Option<String>,
-    },
-    Substitution {
-        class: String,
-        subject: String,
-        abbr: String,
-        teacher: String,
-        teacher_abbr: Option<String>,
-        room: String,
-        group: Option<String>,
-        topic: Option<String>,
-    },
-    Canceled,
-    Absent {
-        info: String,
-        abbr: String,
-    },
-}
-
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Hash, Clone)]
-pub struct Day {
-    date: Option<String>,
-    name: String,
-    lessons: Vec<Vec<Lesson>>,
-}
-
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Hash, Clone)]
-pub struct Hour {
-    start: NaiveTime,
-    duration: i64,
-}
-
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Hash, Clone)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Timetable {
     hours: Vec<Hour>,
     days: Vec<Day>,
+}
+
+#[derive(Debug, Error)]
+pub enum ParseError {
+    #[error("failed to parse hour: {0}")]
+    Hour(#[from] HourParseError),
+    #[error("failed to parse day: {0}")]
+    Day(#[from] DayParseError),
+}
+
+static HOUR_SELECTOR: Lazy<Selector> =
+    Lazy::new(|| Selector::parse("div.bk-hour-wrapper").unwrap());
+static DAY_SELECTOR: Lazy<Selector> =
+    Lazy::new(|| Selector::parse("div.bk-timetable-row").unwrap());
+
+impl Timetable {
+    pub fn parse(html: &str, table_type: &Type) -> Result<Self, ParseError> {
+        let document = Html::parse_document(html);
+
+        let hours = document
+            .select(&HOUR_SELECTOR)
+            .enumerate()
+            .map(|(i, hour)| Hour::parse(hour, i))
+            .collect::<Result<Vec<_>, _>>()?;
+
+        let days = document
+            .select(&DAY_SELECTOR)
+            .map(|day| Day::parse(day, table_type))
+            .collect::<Result<Vec<_>, _>>()?;
+
+        Ok(Self { hours, days })
+    }
 }

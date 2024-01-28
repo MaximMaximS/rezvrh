@@ -1,7 +1,7 @@
 use thiserror::Error;
 
 use super::auth::LoginError;
-use super::timetable::ParseTimetableError;
+use super::timetable::ParseError as ParseTimetableError;
 
 /// Error of request to api
 #[derive(Debug, Error)]
