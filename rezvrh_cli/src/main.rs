@@ -1,7 +1,7 @@
 use clap::Parser;
 use inquire::Select;
 use reqwest::Url;
-use rezvrh::{Bakalari, Type, Which};
+use rezvrh_scraper::{Bakalari, Type, Which};
 use serde::{Deserialize, Serialize};
 use tokio::fs;
 
