@@ -57,7 +57,7 @@ pub struct Bakalari {
 impl Bakalari {
     /// Get client
     #[must_use]
-    pub fn client(&self) -> &Client {
+    fn client(&self) -> &Client {
         &self.client
     }
 
@@ -106,7 +106,7 @@ impl Bakalari {
     ///
     /// # Errors
     /// If renew fails
-    pub async fn get_token(&self) -> LoginResult<Cow<'_, String>> {
+    async fn get_token(&self) -> LoginResult<Cow<'_, String>> {
         self.auth.get_token(self.client.clone()).await
     }
 }
