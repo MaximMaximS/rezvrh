@@ -1,13 +1,11 @@
+use super::bakalari::Client;
+use reqwest::Response;
 use std::borrow::Cow;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
-
-use reqwest::Response;
 use thiserror::Error;
 use tokio::sync::mpsc;
 use tokio::sync::oneshot;
-
-use super::bakalari::Client;
 
 /// Struct to hold token that expires after certain time
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]

@@ -7,7 +7,6 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use {day::Day, hour::Hour};
 
-mod api;
 mod day;
 mod hour;
 mod lesson;
