@@ -2,7 +2,11 @@
 
 Bakalari scraper, written in rust. Very early stage of development, but it seems to work.
 
+First rust project, rushed and low effort, so it's really awful.
+
 ## Usage
+
+Will probably get better in the future.
 
 Create config file
 
