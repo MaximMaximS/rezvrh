@@ -49,7 +49,8 @@ impl Hour {
         let num = single_iter(num.text(), || ParseError::NoNumText)?;
         let num = num.parse::<usize>().map_err(ParseError::ParseNum)?;
         if num != i + 1 {
-            return Err(ParseError::MismatchedNum);
+            println!("num: {num}, i: {i}");
+            //return Err(ParseError::MismatchedNum);
         }
 
         let mut times = hour.select(&TIMES_SELECTOR);

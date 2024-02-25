@@ -30,10 +30,8 @@ pub enum ParseError {
     Lesson(#[from] LessonParseError),
 }
 
-static NAME_SELECTOR: Lazy<Selector> =
-    Lazy::new(|| Selector::parse("span.bk-day-day").unwrap());
-static DATE_SELECTOR: Lazy<Selector> =
-    Lazy::new(|| Selector::parse("span.bk-day-date").unwrap());
+static NAME_SELECTOR: Lazy<Selector> = Lazy::new(|| Selector::parse("span.bk-day-day").unwrap());
+static DATE_SELECTOR: Lazy<Selector> = Lazy::new(|| Selector::parse("span.bk-day-date").unwrap());
 static CELL_SELECTOR: Lazy<Selector> =
     Lazy::new(|| Selector::parse("div.bk-timetable-cell").unwrap());
 

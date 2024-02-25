@@ -49,11 +49,13 @@ impl Bakalari {
     /// Get list of objects
     #[must_use]
     pub fn get_objects(&self, typ: RawType) -> Vec<String> {
-        match typ {
+        let mut obj = match typ {
             RawType::Class => self.get_classes(),
             RawType::Teacher => self.get_teachers(),
             RawType::Room => self.get_rooms(),
-        }
+        };
+        obj.sort();
+        obj
     }
 
     /// Get selector

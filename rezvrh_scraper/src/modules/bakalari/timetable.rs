@@ -20,7 +20,7 @@ impl Bakalari {
             .get(
                 client
                     .url()
-                    .join(&format!("/timetable/public/{which}/{timetable_type}"))
+                    .join(&format!("timetable/public/{which}/{timetable_type}"))
                     .unwrap(),
             )
             .header("Cookie", format!("BakaAuth={}", self.get_token().await?))

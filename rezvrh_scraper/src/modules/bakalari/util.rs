@@ -49,7 +49,7 @@ pub async fn get_info(
     RequestError,
 > {
     let res = client
-        .get(url.join("/timetable/public").unwrap())
+        .get(url.join("timetable/public").unwrap())
         .header("Cookie", format!("BakaAuth={token}"))
         .send()
         .await?;

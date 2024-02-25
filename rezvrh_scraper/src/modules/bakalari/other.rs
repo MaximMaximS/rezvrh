@@ -12,7 +12,7 @@ impl Bakalari {
         let client = self.client();
         let res = client
             .reqwest_client()
-            .get(client.url().join("/timetable/public").unwrap())
+            .get(client.url().join("timetable/public").unwrap())
             .header("Cookie", format!("BakaAuth={}", self.get_token().await?))
             .send()
             .await?;
