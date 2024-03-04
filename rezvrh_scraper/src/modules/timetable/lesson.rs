@@ -13,6 +13,7 @@ mod parser;
 
 /// Struct that hold one lesson of timetable
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
 pub enum Lesson {
     Regular {
         class: String,

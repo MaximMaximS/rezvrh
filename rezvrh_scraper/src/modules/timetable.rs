@@ -13,7 +13,8 @@ mod lesson;
 mod util;
 
 /// Which timetable to get
-#[derive(Debug, Display, PartialEq, Eq, Hash, Clone, Copy)]
+#[derive(Debug, Display, PartialEq, Eq, Hash, Clone, Copy, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
 pub enum Which {
     /// Permanent timetable
     Permanent,
