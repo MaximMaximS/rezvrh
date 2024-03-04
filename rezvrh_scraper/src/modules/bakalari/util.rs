@@ -39,7 +39,7 @@ static ROOMS_SELECTOR: Lazy<Selector> =
 pub async fn get_info(
     client: &ReqwestClient,
     url: &Url,
-    token: &str,
+    token: Option<&str>,
 ) -> Result<
     (
         HashMap<String, String>,
@@ -48,13 +48,37 @@ pub async fn get_info(
     ),
     RequestError,
 > {
-    let res = client
-        .get(url.join("timetable/public").unwrap())
-        .header("Cookie", format!("BakaAuth={token}"))
-        .send()
-        .await?;
+    let req = client.get(url.join("timetable/public").unwrap());
+    let req = if let Some(token) = token {
+        req.header("Cookie", format!("BakaAuth={token}"))
+    } else {
+        req
+    };
 
-    let text = res.text().await?;
+    let response = req.send().await?;
+
+    if response.status().is_redirection() {
+        let location = response
+            .headers()
+            .get("Location")
+            .ok_or(RequestError::UnknownResponse("missing location header"))?;
+        if location
+            .to_str()
+            .map_err(|_| RequestError::UnknownResponse("invalid location header"))?
+            .contains("login")
+        {
+            return Err(RequestError::AuthRequired);
+        }
+        return Err(RequestError::UnknownResponse(
+            "redirected to unknown location",
+        ));
+    }
+
+    let text = response.text().await?;
+
+    if !text.contains("timetable") {
+        return Err(RequestError::UnknownResponse("timetable not present"));
+    }
 
     let document = Html::parse_document(&text);
 

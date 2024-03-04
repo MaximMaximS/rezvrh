@@ -61,7 +61,7 @@ static DAY_SELECTOR: Lazy<Selector> =
     Lazy::new(|| Selector::parse("div.bk-timetable-row").unwrap());
 
 impl Timetable {
-    pub fn parse(html: &str, table_type: &Type) -> Result<Self, ParseError> {
+    pub(super) fn parse(html: &str, table_type: &Type) -> Result<Self, ParseError> {
         let document = Html::parse_document(html);
 
         let hours = document

@@ -22,8 +22,6 @@ fn auth(headers: &HeaderMap) -> Option<(String, String)> {
 
 #[derive(Debug, Error)]
 enum ApiError {
-    #[error("Unauthorized")]
-    Unauthorized,
     #[error("Bad URL")]
     BadUrl,
     #[error("Scrape error: {0}")]
@@ -33,11 +31,10 @@ enum ApiError {
 impl IntoResponse for ApiError {
     fn into_response(self) -> Response {
         match self {
-            Self::Unauthorized => StatusCode::UNAUTHORIZED.into_response(),
             Self::ScrapeError(err) => {
                 (StatusCode::INTERNAL_SERVER_ERROR, err.to_string()).into_response()
             }
-            Self::BadUrl => (StatusCode::BAD_REQUEST, "No URL provided").into_response(),
+            Self::BadUrl => (StatusCode::BAD_REQUEST, "Invalid or missing URL").into_response(),
         }
     }
 }
@@ -47,17 +44,21 @@ struct GetQuery {
     url: String,
 }
 
-async fn get_api(headers: HeaderMap, query: Query<GetQuery>) -> Result<Bakalari, ApiError> {
-    let (username, password) = auth(&headers).ok_or(ApiError::Unauthorized)?;
+async fn get_api(headers: &HeaderMap, query: &Query<GetQuery>) -> Result<Bakalari, ApiError> {
     let url = query.url.parse().map_err(|_| ApiError::BadUrl)?;
-    Ok(Bakalari::from_creds_no_store((&username, &password), url).await?)
+    match auth(headers) {
+        Some((username, password)) => {
+            Ok(Bakalari::from_creds_no_store((&username, &password), url).await?)
+        }
+        None => Ok(Bakalari::no_auth(url).await?),
+    }
 }
 
 async fn get_rooms(
     headers: HeaderMap,
     query: Query<GetQuery>,
 ) -> Result<Json<Vec<String>>, ApiError> {
-    let bakalari = get_api(headers, query).await?;
+    let bakalari = get_api(&headers, &query).await?;
     let classes = bakalari.get_objects(rezvrh_scraper::Type::Room);
     Ok(Json(classes))
 }
@@ -66,7 +67,7 @@ async fn get_classes(
     headers: HeaderMap,
     query: Query<GetQuery>,
 ) -> Result<Json<Vec<String>>, ApiError> {
-    let bakalari = get_api(headers, query).await?;
+    let bakalari = get_api(&headers, &query).await?;
     let classes = bakalari.get_objects(rezvrh_scraper::Type::Class);
     Ok(Json(classes))
 }
@@ -75,10 +76,20 @@ async fn get_teachers(
     headers: HeaderMap,
     query: Query<GetQuery>,
 ) -> Result<Json<Vec<String>>, ApiError> {
-    let bakalari = get_api(headers, query).await?;
+    let bakalari = get_api(&headers, &query).await?;
     let classes = bakalari.get_objects(rezvrh_scraper::Type::Teacher);
     Ok(Json(classes))
 }
+
+/*
+async fn get_timetable(
+    headers: HeaderMap,
+    query: Query<GetQuery>,
+) -> Result<Json<Timetable>, ApiError> {
+    let bakalari = get_api(&headers, &query).await?;
+    todo!()
+}
+*/
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

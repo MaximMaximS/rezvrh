@@ -71,7 +71,7 @@ impl Bakalari {
         let (classes, teachers, rooms) = get_info(
             client.reqwest_client(),
             client.url(),
-            &auth.get_token(client.clone()).await?,
+           Some(&auth.get_token(client.clone()).await?),
         )
         .await?;
         Ok(Self {
@@ -91,7 +91,7 @@ impl Bakalari {
         let client = Arc::new(Client::new(url));
         let token = Credentials::login((&creds.0, &creds.1), &client).await?;
         let (classes, teachers, rooms) =
-            get_info(client.reqwest_client(), client.url(), &token).await?;
+            get_info(client.reqwest_client(), client.url(), Some(&token)).await?;
         let auth = Auth::from_token(token);
         Ok(Self {
             client,
@@ -109,7 +109,7 @@ impl Bakalari {
     pub async fn no_auth(url: Url) -> Result<Self, RequestError> {
         let client = Arc::new(Client::new(url));
         let (classes, teachers, rooms) =
-            get_info(client.reqwest_client(), client.url(), "").await?;
+            get_info(client.reqwest_client(), client.url(), None).await?;
         Ok(Self {
             client,
             auth: Auth::None,
@@ -140,6 +140,8 @@ pub enum RequestError {
     UnknownResponse(&'static str),
     #[error("{0}")]
     ParseFailed(#[from] TimetableParseError),
+    #[error("school requires authentication")]
+    AuthRequired,
 }
 
 pub type RequestResult<T> = Result<T, RequestError>;
