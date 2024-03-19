@@ -71,7 +71,7 @@ impl Bakalari {
         let (classes, teachers, rooms) = get_info(
             client.reqwest_client(),
             client.url(),
-           Some(&auth.get_token(client.clone()).await?),
+            Some(&auth.get_token(client.clone()).await?),
         )
         .await?;
         Ok(Self {
