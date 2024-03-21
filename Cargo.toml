@@ -1,8 +1,4 @@
 [workspace]
 resolver = "2"
 
-members = [
-    "rezvrh_scraper",
-    "rezvrh_cli",
-    "rezvrh_api",
-]
+members = ["rezvrh_scraper", "rezvrh_cli", "rezvrh_api"]
