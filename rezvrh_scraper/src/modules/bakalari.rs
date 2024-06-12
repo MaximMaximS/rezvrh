@@ -89,7 +89,7 @@ impl Bakalari {
     /// Returns error if authentication fails
     pub async fn from_creds_no_store(creds: (&str, &str), url: Url) -> Result<Self, RequestError> {
         let client = Arc::new(Client::new(url));
-        let token = Credentials::login((&creds.0, &creds.1), &client).await?;
+        let token = Credentials::login((creds.0, creds.1), &client).await?;
         let (classes, teachers, rooms) =
             get_info(client.reqwest_client(), client.url(), Some(&token)).await?;
         let auth = Auth::from_token(token);
