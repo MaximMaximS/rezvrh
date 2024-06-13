@@ -12,7 +12,7 @@ use thiserror::Error;
 mod parser;
 
 /// Struct that hold one lesson of timetable
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename_all = "lowercase")]
 pub enum Lesson {
     Regular {

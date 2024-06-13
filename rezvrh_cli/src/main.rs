@@ -64,5 +64,9 @@ async fn main() -> anyhow::Result<()> {
 
     println!("Wrote timetable to timetable.json");
 
+    let s = tokio::fs::read_to_string("timetable.json").await?;
+    let table2: rezvrh_scraper::Timetable = serde_json::from_str(&s)?;
+    assert_eq!(table, table2);
+
     Ok(())
 }

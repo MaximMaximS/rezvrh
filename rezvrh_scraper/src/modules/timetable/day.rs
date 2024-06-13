@@ -1,14 +1,15 @@
 use super::lesson::ParseError as LessonParseError;
 use super::{lesson::Lesson, util::single_iter, Type};
+use chrono::{Datelike, NaiveDate};
 use once_cell::sync::Lazy;
 use scraper::{ElementRef, Selector};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 /// Struct that hold one day of timetable
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub struct Day {
-    date: Option<String>,
+    date: Option<NaiveDate>,
     name: String,
     lessons: Vec<Vec<Lesson>>,
 }
@@ -23,7 +24,7 @@ pub enum ParseError {
     #[error("no date")]
     NoDate,
     #[error("failed to parse date: {0}")]
-    ParseDate(chrono::ParseError),
+    ParseDate(String),
     #[error("no lessons")]
     NoLessons,
     #[error("failed to parse lesson: {0}")]
@@ -48,6 +49,26 @@ impl Day {
         if date.is_some() && dates.next().is_some() {
             return Err(ParseError::NoDate);
         }
+
+        let date = date
+            .map(|d| {
+                // Current year
+                let year = chrono::Local::now().date_naive().year();
+                // 12.6.
+                let (day, month) = d.split_once('.').ok_or(ParseError::ParseDate(d.clone()))?;
+                let (month, _) = month
+                    .split_once('.')
+                    .ok_or(ParseError::ParseDate(d.clone()))?;
+                NaiveDate::from_ymd_opt(
+                    year,
+                    month
+                        .parse()
+                        .map_err(|_| ParseError::ParseDate(d.clone()))?,
+                    day.parse().map_err(|_| ParseError::ParseDate(d.clone()))?,
+                )
+                .ok_or(ParseError::ParseDate(d.clone()))
+            })
+            .transpose()?;
 
         let lessons = day
             .select(&CELL_SELECTOR)

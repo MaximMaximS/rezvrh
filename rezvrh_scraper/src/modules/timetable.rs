@@ -42,7 +42,7 @@ pub enum Type<'a> {
     Room(&'a str),
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub struct Timetable {
     hours: Vec<Hour>,
     days: Vec<Day>,
