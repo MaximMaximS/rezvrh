@@ -9,8 +9,8 @@ use thiserror::Error;
 /// Struct that hold one day of timetable
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub struct Day {
-    date: Option<NaiveDate>,
-    lessons: Vec<Vec<Lesson>>,
+    pub date: Option<NaiveDate>,
+    pub lessons: Vec<Vec<Lesson>>,
 }
 
 /// Day parse error

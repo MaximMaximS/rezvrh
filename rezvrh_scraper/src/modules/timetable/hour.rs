@@ -8,8 +8,8 @@ use thiserror::Error;
 /// Struct that hold one hour of timetable (header)
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub struct Hour {
-    start: NaiveTime,
-    duration: i64,
+    pub start: NaiveTime,
+    pub duration: i64,
 }
 
 /// Hour parse error

@@ -44,8 +44,8 @@ pub enum Type {
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub struct Timetable {
-    hours: Vec<Hour>,
-    days: Vec<Day>,
+    pub hours: Vec<Hour>,
+    pub days: Vec<Day>,
 }
 
 #[derive(Debug, Error)]
