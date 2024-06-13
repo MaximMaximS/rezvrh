@@ -9,7 +9,7 @@ use thiserror::Error;
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub struct Hour {
     pub start: NaiveTime,
-    pub duration: u64,
+    pub duration: u32,
 }
 
 /// Hour parse error
@@ -67,7 +67,7 @@ impl Hour {
         let to = NaiveTime::parse_from_str(to, "%H:%M").map_err(ParseError::ParseTo)?;
         let duration = to - from;
         let duration = duration.num_minutes();
-        let duration = u64::try_from(duration).map_err(|_| ParseError::InvertedFromTo)?;
+        let duration = u32::try_from(duration).map_err(|_| ParseError::InvertedFromTo)?;
 
         Ok(Self {
             start: from,
