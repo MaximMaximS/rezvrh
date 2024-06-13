@@ -1502,7 +1502,7 @@ dependencies = [
 
 [[package]]
 name = "rezvrh_scraper"
-version = "0.1.5"
+version = "0.1.6"
 dependencies = [
  "chrono",
  "derive_more 1.0.0-beta.6",

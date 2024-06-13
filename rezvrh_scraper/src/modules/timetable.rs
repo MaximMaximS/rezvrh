@@ -12,6 +12,8 @@ mod hour;
 mod lesson;
 mod util;
 
+pub use lesson::Lesson;
+
 /// Which timetable to get
 #[derive(Debug, Display, PartialEq, Eq, Hash, Clone, Copy, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]

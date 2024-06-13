@@ -219,7 +219,10 @@ fn parse_single(lesson: ElementRef, timetable_type: &Type) -> Result<Lesson, Par
 }
 
 impl Lesson {
-    pub fn parse(lesson: ElementRef, timetable_type: &Type) -> Result<Vec<Self>, ParseError> {
+    pub(crate) fn parse(
+        lesson: ElementRef,
+        timetable_type: &Type,
+    ) -> Result<Vec<Self>, ParseError> {
         let item = lesson.select(&DAY_ITEM_SELECTOR).next();
         let Some(item) = item else {
             return Ok(Vec::new());

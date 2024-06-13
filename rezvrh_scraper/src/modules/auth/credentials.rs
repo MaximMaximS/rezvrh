@@ -42,7 +42,7 @@ impl TempToken {
 type TokenRequest = (Arc<Client>, oneshot::Sender<LoginResult<String>>);
 
 /// Struct that hold the credentials and token
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Credentials {
     sender: mpsc::Sender<TokenRequest>,
 }

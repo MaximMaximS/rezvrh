@@ -25,7 +25,7 @@ pub enum LoginError {
 pub type LoginResult<T> = Result<T, LoginError>;
 
 /// Authentication types
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Auth {
     /// Username and password
     Credentials(Credentials),

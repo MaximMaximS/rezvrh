@@ -45,7 +45,7 @@ impl Client {
 }
 
 /// Bakalari api struct
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Bakalari {
     client: Arc<Client>,
     auth: Auth,
