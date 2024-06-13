@@ -10,7 +10,6 @@ use thiserror::Error;
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub struct Day {
     date: Option<NaiveDate>,
-    name: String,
     lessons: Vec<Vec<Lesson>>,
 }
 
@@ -31,7 +30,6 @@ pub enum ParseError {
     Lesson(#[from] LessonParseError),
 }
 
-static NAME_SELECTOR: Lazy<Selector> = Lazy::new(|| Selector::parse("span.bk-day-day").unwrap());
 static DATE_SELECTOR: Lazy<Selector> = Lazy::new(|| Selector::parse("span.bk-day-date").unwrap());
 static CELL_SELECTOR: Lazy<Selector> =
     Lazy::new(|| Selector::parse("div.bk-timetable-cell").unwrap());
@@ -39,11 +37,6 @@ static CELL_SELECTOR: Lazy<Selector> =
 impl Day {
     /// Parse day from html
     pub fn parse(day: ElementRef, timetable_type: &Type) -> Result<Self, ParseError> {
-        let name = single_iter(day.select(&NAME_SELECTOR), || ParseError::NoName)?;
-        let name = single_iter(name.text(), || ParseError::NoNameText)?
-            .trim()
-            .to_owned();
-
         let mut dates = single_iter(day.select(&DATE_SELECTOR), || ParseError::NoDate)?.text();
         let date = dates.next().map(|d| d.trim().to_owned());
         if date.is_some() && dates.next().is_some() {
@@ -59,14 +52,30 @@ impl Day {
                 let (month, _) = month
                     .split_once('.')
                     .ok_or(ParseError::ParseDate(d.clone()))?;
-                NaiveDate::from_ymd_opt(
+                let date = NaiveDate::from_ymd_opt(
                     year,
                     month
                         .parse()
                         .map_err(|_| ParseError::ParseDate(d.clone()))?,
                     day.parse().map_err(|_| ParseError::ParseDate(d.clone()))?,
                 )
-                .ok_or(ParseError::ParseDate(d.clone()))
+                .ok_or(ParseError::ParseDate(d.clone()))?;
+
+                // Check diff by months
+                let now = chrono::Local::now().date_naive();
+                let diff = date - now;
+                let date = if diff.num_days() < -60 {
+                    // Next year
+                    NaiveDate::from_ymd_opt(year + 1, date.month(), date.day())
+                        .ok_or(ParseError::ParseDate(d.clone()))?
+                } else if diff.num_days() > 60 {
+                    // Last year
+                    NaiveDate::from_ymd_opt(year - 1, date.month(), date.day())
+                        .ok_or(ParseError::ParseDate(d.clone()))?
+                } else {
+                    date
+                };
+                Ok::<_, ParseError>(date)
             })
             .transpose()?;
 
@@ -75,10 +84,6 @@ impl Day {
             .map(|lesson| Lesson::parse(lesson, timetable_type))
             .collect::<Result<Vec<_>, _>>()?;
 
-        Ok(Self {
-            date,
-            name,
-            lessons,
-        })
+        Ok(Self { date, lessons })
     }
 }
