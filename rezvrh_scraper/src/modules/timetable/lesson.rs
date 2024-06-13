@@ -155,7 +155,7 @@ fn parse_single(lesson: ElementRef, timetable_type: &Type) -> Result<Lesson, Par
             let topic = theme;
 
             let class = if let Type::Class(class) = timetable_type {
-                class.to_owned().to_owned()
+                class.to_owned()
             } else {
                 group
                     .as_ref()

@@ -32,7 +32,7 @@ pub fn teacher(
         Some(t) => t,
         None => {
             if let Type::Teacher(t) = timetable_type {
-                t.to_owned().to_owned()
+                t.to_owned()
             } else {
                 return Err(ParseError::MissingProperty("teacher"));
             }

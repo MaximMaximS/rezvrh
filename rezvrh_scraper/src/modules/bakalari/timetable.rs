@@ -12,7 +12,7 @@ impl Bakalari {
     pub async fn get_timetable(
         &self,
         which: Which,
-        timetable_type: &Type<'_>,
+        timetable_type: &Type,
     ) -> RequestResult<Timetable> {
         let client = self.client();
         let res = client

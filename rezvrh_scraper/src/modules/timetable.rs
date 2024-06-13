@@ -33,13 +33,13 @@ pub enum RawType {
 
 /// Timetable type
 #[derive(Debug, Display, PartialEq, Eq, Hash, Clone)]
-pub enum Type<'a> {
+pub enum Type {
     #[display("teacher/{_0}")]
-    Teacher(&'a str),
+    Teacher(String),
     #[display("class/{_0}")]
-    Class(&'a str),
+    Class(String),
     #[display("room/{_0}")]
-    Room(&'a str),
+    Room(String),
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]

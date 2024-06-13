@@ -13,7 +13,7 @@ impl Bakalari {
     /// Get class selector
     #[must_use]
     pub fn get_class(&self, class: &str) -> Option<Type> {
-        self.classes.get(class).map(|id| Type::Class(id))
+        self.classes.get(class).map(|id| Type::Class(id.to_owned()))
     }
 
     /// Get list of teachers
@@ -28,7 +28,9 @@ impl Bakalari {
     /// Get teacher selector
     #[must_use]
     pub fn get_teacher(&self, teacher: &str) -> Option<Type> {
-        self.teachers.get(teacher).map(|id| Type::Teacher(id))
+        self.teachers
+            .get(teacher)
+            .map(|id| Type::Teacher(id.to_owned()))
     }
 
     /// Get list of rooms
@@ -43,7 +45,7 @@ impl Bakalari {
     /// Get room selector
     #[must_use]
     pub fn get_room(&self, room: &str) -> Option<Type> {
-        self.rooms.get(room).map(|id| Type::Room(id))
+        self.rooms.get(room).map(|id| Type::Room(id.to_owned()))
     }
 
     /// Get list of objects
